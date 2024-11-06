@@ -12,7 +12,7 @@ After=network.target
 [Service]
 WorkingDirectory=$WORKDIR
 Environment="PATH=$WORKDIR/bin"
-ExecStart=python app.py
+ExecStart=$WORKDIR/venv/python app.py
 Restart=always
 RestartSec=5
 KillSignal=SIGQUIT
