@@ -24,22 +24,29 @@ jobs:
           APP_NAME=${{ secrets.APP_NAME || '' }}
           # Add additional secrets as needed
           EOF
-
+      
       # Deploy application to EC2
-      - name: Deploy to EC2
+      - name: Clone the Repo and install dependencies
+        env:
+          EC2_IP: ${{ secrets.EC2_IP }}
+          EC2_USER: ${{ secrets.EC2_USER }}
+        run: |
+          ssh -o StrictHostKeyChecking=no -i private_key.pem $EC2_USER@$EC2_IP << 'EOF'
+            sudo yum install -y git python3 pip
+            sudo rm -rf app
+            git clone https://github.com/satyamtechstax/fastapi-cicd.git app
+          EOF
+            # Deploy application to EC2
+      - name: Copy .env and Deploy the App
         env:
           EC2_IP: ${{ secrets.EC2_IP }}
           EC2_USER: ${{ secrets.EC2_USER }}
         run: |
           scp -o StrictHostKeyChecking=no -i private_key.pem .env $EC2_USER@$EC2_IP:~/app/.env
           ssh -o StrictHostKeyChecking=no -i private_key.pem $EC2_USER@$EC2_IP << 'EOF'
-            sudo yum install -y git python3 pip
-            sudo rm -rf app
-            git clone https://github.com/satyamtechstax/fastapi-cicd.git app
-            cd app
+            cd ~/app
             sudo sh install.sh
           EOF
-
       # Cleanup SSH key
       - name: Cleanup
         run: rm -f private_key.pem .env
