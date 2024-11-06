@@ -1,18 +1,21 @@
 #!/bin/bash
 set -e
 WORKDIR=$(pwd)
+FLASK_DIR=$WORKDIR
+FLASK_VENV=$WORKDIR/venv
 python -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
+
 cat << EOT > /etc/systemd/system/fastapi.service
 [Unit]
-Description=FastAPI Service
+Description=Flask Service
 After=network.target
 
 [Service]
-WorkingDirectory=$WORKDIR
-Environment="PATH=$WORKDIR/bin"
-ExecStart=$WORKDIR/venv/python app.py
+WorkingDirectory=$FLASK_DIR
+Environment="PATH=$FLASK_VENV/bin"
+ExecStart=$FLASK_VENV/bin/python app.py
 Restart=always
 RestartSec=5
 KillSignal=SIGQUIT
@@ -26,7 +29,6 @@ EOT
 echo "Reloading Systemd daemon..."
 systemctl daemon-reload
 
-# Start and enable the Uvicorn and Gunicorn services
 echo "Starting and Enabling Fast API service..."
 systemctl start fastapi.service
 systemctl enable fastapi.service
