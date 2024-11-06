@@ -1,30 +1,45 @@
-# This is a basic workflow to help you get started with Actions
+# Workflow for deploying a Flask app to an EC2 instance using GitHub Actions
 name: CI
 on:
-  # Triggers the workflow on push or pull request events but only for the "main" branch
   push:
     branches: [ "main" ]
-  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy to EC2
+      # Setup SSH key and permissions
+      - name: Configure SSH Key
         env:
           PRIVATE_KEY: ${{ secrets.EC2_PRIVATE_KEY }}
-          EC2_IP: ${{ secrets.EC2_IP }}
-          EC2_USER: ${{ secrets.EC2_USER }}
         run: |
           echo "$PRIVATE_KEY" > private_key.pem
           chmod 400 private_key.pem
-          # SSH into EC2 instance and deploy Flask app
-          ssh -o StrictHostKeyChecking=no -i private_key.pem $EC2_USER@$EC2_IP << 'EOF'
-          sudo yum install git python pip -y
-          sudo rm -rf app 
-          git clone https://github.com/satyamtechstax/fastapi-cicd.git app
-          cd app
-          sudo sh install.sh
+
+      # Create .env file from GitHub Secrets
+      - name: Generate .env File
+        run: |
+          cat <<EOF > .env
+          APP_NAME=${{ secrets.APP_NAME || '' }}
+          # Add additional secrets as needed
           EOF
-          rm -f private_key.pem
+
+      # Deploy application to EC2
+      - name: Deploy to EC2
+        env:
+          EC2_IP: ${{ secrets.EC2_IP }}
+          EC2_USER: ${{ secrets.EC2_USER }}
+        run: |
+          scp -o StrictHostKeyChecking=no -i private_key.pem .env $EC2_USER@$EC2_IP:~/app/.env
+          ssh -o StrictHostKeyChecking=no -i private_key.pem $EC2_USER@$EC2_IP << 'EOF'
+            sudo yum install -y git python3 pip
+            sudo rm -rf app
+            git clone https://github.com/satyamtechstax/fastapi-cicd.git app
+            cd app
+            sudo sh install.sh
+          EOF
+
+      # Cleanup SSH key
+      - name: Cleanup
+        run: rm -f private_key.pem .env
