@@ -1,5 +1,7 @@
 #!/bin/bash
-set -e
+
+# Cleanup Actions
+bash ./uninstall.sh
 WORKDIR=$(pwd)
 FLASK_DIR=$WORKDIR
 FLASK_VENV=$WORKDIR/venv
