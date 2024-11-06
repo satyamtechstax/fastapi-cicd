@@ -26,5 +26,5 @@ jobs:
           git clone https://github.com/satyamtechstax/fastapi-cicd.git app
           cd app
           sudo sh install.sh
-          sudo rm private_key.pem
           EOF
+          rm -f private_key.pem
