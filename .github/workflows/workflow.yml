@@ -1,9 +1,7 @@
-# Workflow for deploying a Flask app to an EC2 instance using GitHub Actions
 name: CI
 on:
   push:
     branches: [ "main" ]
-    
   workflow_dispatch:
 
 jobs:
@@ -24,37 +22,40 @@ jobs:
           cat <<EOF > .env
           APP_NAME=${{ secrets.APP_NAME || '' }}
           EOF
+
+      # Make app dir and Copy .env
       - name: Make app dir and Copy .env 
         env:
           EC2_IP: ${{ secrets.EC2_IP }}
           EC2_USER: ${{ secrets.EC2_USER }}
         run: |
           ssh -o StrictHostKeyChecking=no -i private_key.pem $EC2_USER@$EC2_IP << 'EOF'
-            if [ ! -d "$HOME/app" ];then
+            if [ ! -d "$HOME/app" ]; then
               mkdir $HOME/app
             fi
           EOF
           scp -o StrictHostKeyChecking=no -i private_key.pem .env $EC2_USER@$EC2_IP:~/app/.env
-      
+
       # Deploy application to EC2
       - name: Clone the Repo and install dependencies
         env:
           EC2_IP: ${{ secrets.EC2_IP }}
           EC2_USER: ${{ secrets.EC2_USER }}
+          REPO_URL: https://github.com/${{ github.repository }}.git  # Use GitHub's repository URL
         run: |
           ssh -o StrictHostKeyChecking=no -i private_key.pem $EC2_USER@$EC2_IP << 'EOF'
-            sudo yum install -y git python pip
+            sudo yum install -y git python3-pip  # Updated python package name
             APP_DIR="$HOME/app"
-            REPO_URL="https://github.com/satyamtechstax/fastapi-cicd.git"
-            if [ -d "$APP_DIR/.git" ];then
+            REPO_URL="https://github.com/${{ github.repository }}.git"  # Dynamically fetch repo URL from GitHub
+            if [ -d "$APP_DIR/.git" ]; then
                 cd $APP_DIR
-                git pull $REPO_URL 
-                echo "repo exist"
+                git pull $REPO_URL
+                echo "Repo exists, pulling latest changes"
                 sudo bash restart.sh
             else
                 cp -r $APP_DIR $APP_DIR.tmp
                 rm -rf $APP_DIR
-                echo "Repo not exist" $APP_DIR
+                echo "Cloning the repository..."
                 git clone $REPO_URL $APP_DIR
                 cd $APP_DIR
                 cp $APP_DIR.tmp/.env $APP_DIR
@@ -62,6 +63,7 @@ jobs:
                 sudo bash install.sh
             fi
           EOF
+
       # Cleanup SSH key
       - name: Cleanup
         run: rm -f private_key.pem .env
