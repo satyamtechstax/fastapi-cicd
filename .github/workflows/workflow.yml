@@ -52,9 +52,13 @@ jobs:
                 echo "repo exist"
                 sudo bash restart.sh
             else
+                cp -r $APP_DIR $APP_DIR.tmp
+                rm -rf $APP_DIR
+                echo "Repo not exist" $APP_DIR
                 git clone $REPO_URL $APP_DIR
                 cd $APP_DIR
-                echo "Repo not exist" $APP_DIR
+                cp $APP_DIR.tmp/.env $APP_DIR
+                rm -rf $APP_DIR.tmp
                 sudo bash install.sh
             fi
           EOF
