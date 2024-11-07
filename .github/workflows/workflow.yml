@@ -46,7 +46,7 @@ jobs:
             sudo yum install -y git python3 pip
             APP_DIR="$HOME/app"
             REPO_URL="https://github.com/satyamtechstax/ci-cd-test.git"
-            if [ -d $APP_DIR ];then
+            if [ -d "$APP_DIR/.git" ];then
                 cd $APP_DIR
                 git pull $REPO_URL 
                 echo "repo exist"
