@@ -8,7 +8,6 @@ FLASK_VENV=$WORKDIR/venv
 python -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
-
 cat << EOT > /etc/systemd/system/fastapi.service
 [Unit]
 Description=Flask Service
@@ -35,3 +34,10 @@ echo "Starting and Enabling Fast API service..."
 systemctl start fastapi.service
 systemctl enable fastapi.service
 echo "Fast API service is started and enabled"
+echo "sleep 5s"
+sleep 5
+if curl -s -o /dev/null -w "%{http_code}" "http://localhost:8080/" | grep -q "200"; then
+    echo "Server started"
+else
+    echo "Failed to start server"
+fi

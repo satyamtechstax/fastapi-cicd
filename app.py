@@ -9,4 +9,4 @@ APP_NAME=os.getenv('APP_NAME','Alien APP')
 def hello_world():
     return {"message":f'Hello, World!(From Flask App) v3 ,APP_NAME:{APP_NAME}'}
 
-app.run(host='0.0.0.0',port=8080)
+app.run(host='0.0.0.0',port=8080,debug=False)
